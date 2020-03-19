@@ -1,59 +1,50 @@
-exports.up = function(knex) {
-    return knex.schema.createTable('species', tbl => {
-         // the type of Primary Key is: integer without negative values, also called unsigned
-        tbl.increments();
-  
-        tbl.string('name', 255).notNullable();
+exports.up = async function(knex) {
+    await knex.schema.createTable("zoos", (table) => {
+      table.increments("id")
+      table.string("name").notNullable()
+      table.string("address").notNullable()
     })
-    .createTable('animals', tbl => {
-        tbl.increments();
   
-        tbl.string('name', 255).notNullable();
-  
-        // define our Foreign Keys
-        tbl
-          .integer('species_id')
-          .unsigned()
-          .references('id')
-          .inTable('species')
-          .onDelete('RESTRICT') // about deleting the record of the primary key table. 'CASCADE', 'RESTRICT', 'NO ACTION', 'SET NULL'
-          .onUpdate('CASCADE') // about changing the value of the primary key table
-      
-          // we have bears and a few animals that are bears
+    await knex.schema.createTable("species", (table) => {
+      table.increments("id")
+      table.string("name").notNullable()
     })
-    .createTable('zoos', tbl => {
-      tbl.increments();
-      tbl.string('name', 255).notNullable();
-      tbl.string('address', 255).notNullable();
+  
+    await knex.schema.createTable("animals", (table) => {
+      table.increments("id")
+      table.string("name").notNullable()
+      table.integer("species_id")
+        .notNullable()
+        .references("id")
+        .inTable("species")
+        .onDelete("CASCADE")
+        .onUpdate("CASCADE")
     })
-    .createTable('animal_zoos', tbl => {
-        tbl.increments()
-        
-        tbl
-          .integer('zoo_id')
-          .unsigned()
-          .references('id')
-          .inTable('zoos')
-          .onDelete('RESTRICT')
-          .onUpdate('CASCADE');
   
-        tbl
-          .integer('animal_id')
-          .unsigned()
-          .references('id')
-          .inTable('animals')
-          .onDelete('RESTRICT')
-          .onUpdate('CASCADE');
-  
-          tbl.date('from');
-          tbl.date('to');
+    await knex.schema.createTable("zoos_animals", (table) => {
+      table.integer("zoo_id")
+        .notNullable()
+        .references("id")
+        .inTable("zoos")
+        .onDelete("CASCADE")
+        .onUpdate("CASCADE")
+      table.integer("animal_id")
+        .notNullable()
+        .references("id")
+        .inTable("animals")
+        .onDelete("CASCADE")
+        .onUpdate("CASCADE")
+      // dates of when the animal was at the zoo
+      table.date("from")
+      table.date("to")
+      // create a primary key as a combination of columns
+      table.primary(["zoo_id", "animal_id"])
     })
-  };
+  }
   
-  exports.down = function(knex) {
-    return knex.schema
-      .dropTableIfExists('animal_zoos')
-      .dropTableIfExists('zoos')
-      .dropTableIfExists('animals')
-      .dropTableIfExists('species');
-  };
+  exports.down = async function(knex) {
+    await knex.schema.dropTableIfExists("zoos_animals")
+    await knex.schema.dropTableIfExists("animals")
+    await knex.schema.dropTableIfExists("species")
+    await knex.schema.dropTableIfExists("zoos")
+  }
